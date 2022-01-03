@@ -1,2 +1,2 @@
-# Platformer-game
-Platformer game in vanilla JS
+# Big-Green-Monster-game
+Simple game in vanilla JS

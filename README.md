@@ -1,2 +1,2 @@
-# Platformer-game
-Platformer game in vanilla JS
+# Skate-Invaders-game
+Simple game in vanilla JS

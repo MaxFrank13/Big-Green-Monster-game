@@ -15,7 +15,7 @@ body {
     left: -200%;
     width: 500%;
     height: 500%;
-    background: url('textures/Brick_03.png');
+    background: linear-gradient(rgb(225 81 26 / 47%), rgb(9 22 74 / 83%)), url(textures/Brick_03.png);
     transform: rotate3d(1, 0, 1, 50deg);
 }
 canvas {

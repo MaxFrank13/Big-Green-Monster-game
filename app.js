@@ -40,7 +40,8 @@ images.monster = new Image();
 images.monster.src = "assets/images/hulk.png";
 images.box = new Image();
 images.box.src = "assets/images/boxes.png";
-
+images.rocket = new Image();
+images.rocket.src = "assets/images/rocket.png";
 
 // **** Objects ****
 
@@ -48,11 +49,13 @@ const player = {
     x: 200,
     y: 200,
     width: 32,
-    height: 32,
+    height: 48,
     frameX: 0,
     frameY: 0,
     speed: 9,
     moving: false,
+    collisionY: 0,
+    collisionX: 0,
     direction: "",
     mobility: {
         up: true,
@@ -167,32 +170,53 @@ function drawSprite(img, sX, sY, sW, sH, dX, dY, dW, dH) {
 }
 
 function movePlayer() {
-    checkUp();
-    if (keys["ArrowUp"] && player.y > 0 && player.mobility.up) {
-        player.direction = "up";
-        player.y -= player.speed;
-        player.frameY = 3;
-        }
-    checkDown();
-    if (keys["ArrowDown"] && player.y < canvas.height - player.height && player.mobility.down) {
-        player.direction = "down";
-        player.y += player.speed;
-        player.frameY = 0;
-    }
-    checkRight();
-    if (keys["ArrowRight"] && player.x < canvas.width - player.width && player.mobility.right) {
-        player.direction = "right";
-        player.x += player.speed;
-        player.frameY = 2;
-    }
-    checkLeft();
-    if (keys["ArrowLeft"] && player.x > 0 && player.mobility.left && player.mobility.left) {
-        player.direction = "left";  
-        player.x -= player.speed;
-        player.frameY = 1;
-    }
 
+    if (keys["ArrowUp"]) {
+        mobilityReset();
+        checkUp();
+        console.log(player.mobility.up);
+        if (player.mobility.up && player.y > 0) {
+            player.y -= player.speed;
+            player.frameY = 3;
+        } else if (player.y > 0) {
+            player.y -= player.collisionY; // its working but not enough, need to trim sprite sheet
+            player.frameY = 3;
+        }
+    }
+    if (keys["ArrowDown"]) {
+        mobilityReset();
+        checkDown();
+        if (player.mobility.down && player.y < (canvas.height - player.height)) {
+            player.y += player.speed;
+            player.frameY = 0;
+        } else if (player.y < (canvas.height - player.height)) {
+            player.frameY = 0;
+        }
+    }
+    if (keys["ArrowRight"]) {
+        mobilityReset();
+        checkRight();
+        if (player.mobility.right && player.x < canvas.width - player.width) {
+            player.direction = "right";
+            player.x += player.speed;
+            player.frameY = 2;
+        } else if (player.x < canvas.width - player.width) {
+            player.frameY = 2;
+        }
+    }
+    if (keys["ArrowLeft"]) {
+        mobilityReset();
+        checkLeft();
+        if (player.mobility.left && player.x > 0) {
+            player.direction = "left";
+            player.x -= player.speed;
+            player.frameY = 1;
+        } else if (player.x > 0) {
+            player.frameY = 1;
+        }
+    }
 }
+
 
 function handlePlayerFrame() {
     if (player.frameX < 3 && player.moving) player.frameX++
@@ -213,233 +237,73 @@ function checkCollision() {
     })
 }
 
+
 function checkUp() {
-    player.mobility.up = true;
     boxes.forEach(function (box) {
         if (
-            (player.x) < (box.x) + (box.width - 9) &&
-            player.x + (player.width) > (box.x + 9) &&
-            (player.y) < (box.y) + (box.height - 9) &&
-            (player.y) + (player.height) > (box.y)
+            (player.x) < (box.x) + (box.width) &&
+            player.x + (player.width) > (box.x) &&
+            (player.y - player.speed) < (box.y) + (box.height) &&
+            (player.y - player.speed) + (player.height) > (box.y)
         ) {
             player.mobility.up = false;
-        }  
+            player.collisionY = player.y - (box.y + box.height);
+        }
     })
 }
 function checkDown() {
-    player.mobility.down = true;
+
     boxes.forEach(function (box) {
         if (
-            (player.x) < (box.x) + (box.width - 9) &&
-            player.x + (player.width) > (box.x + 9) &&
-            (player.y + 9) < (box.y) + (box.height - 9) &&
-            (player.y + 9) + (player.height) > (box.y + 9)
+            (player.x) < (box.x) + (box.width) &&
+            player.x + (player.width) > (box.x) &&
+            (player.y + player.speed) < (box.y) + (box.height) &&
+            (player.y + player.speed) + (player.height) > (box.y)
         ) {
             player.mobility.down = false;
-        }  
+            player.collisionY = box.y - (player.y + player.height);
+        }
     })
 }
 function checkRight() {
-    player.mobility.right = true;
+
     boxes.forEach(function (box) {
         if (
-            (player.x + 9) < (box.x) + (box.width - 9) &&
-            (player.x + 9) + (player.width) > (box.x + 9) &&
-            (player.y) < (box.y) + (box.height - 9) &&
-            (player.y) + (player.height) > (box.y + 9)
+            (player.x + player.speed) < (box.x) + (box.width) &&
+            (player.x + player.speed) + (player.width) > (box.x) &&
+            (player.y) < (box.y) + (box.height) &&
+            (player.y) + (player.height) > (box.y)
         ) {
             player.mobility.right = false;
-        }  
+        }
     })
 }
 function checkLeft() {
-    player.mobility.left = true;
+
     boxes.forEach(function (box) {
         if (
-            (player.x - 9) < (box.x) + (box.width - 9) &&
-            (player.x - 9) + (player.width) > (box.x + 9) &&
-            (player.y) < (box.y) + (box.height - 9) &&
-            (player.y) + (player.height) > (box.y + 9)
+            (player.x - player.speed) < (box.x) + (box.width) &&
+            (player.x - player.speed) + (player.width) > (box.x) &&
+            (player.y) < (box.y) + (box.height) &&
+            (player.y) + (player.height) > (box.y)
         ) {
             player.mobility.left = false;
-        }  
+        }
     })
 }
-
-
-
-// function test() {
-//     boxes.forEach(function (box) {
-//     if (
-//         player.x < (box.x) + (box.width - 5) &&
-//         player.x + player.width > (box.x + 5) &&
-//         (player.y) < (box.y) + (box.height - 5) &&
-//         (player.y) + player.height > (box.y + 5)
-//     ) {
-//         player.movement = false;
-//         }
-//     })
-// }
-// console.log(test);
-
-// function checkObstruction(dir) {
-//     boxes.forEach(function (box) {
-//         switch (player.direction) {
-//             case "up":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("up-blocked");
-//                     player.mobility.up = false;
-//                 } else {
-//                     player.mobility.down = true;
-//                     player.mobility.right = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "down":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("down-blocked");
-//                     player.mobility.down = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.right = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "right":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("right-blocked");
-//                     player.mobility.right = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.down = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "left":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("left-blocked");
-//                     player.mobility.left = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.down = true;
-//                     player.mobility.right = true;
-//                 }
-//                 break;
-//         }
-//     })
-// }
-
-// function checkObstruction() {
-//     boxes.forEach(function (box) {
-//         switch (player.direction) {
-//             case "up":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("up-blocked");
-//                     player.mobility.up = false;
-//                 } else {
-//                     player.mobility.down = true;
-//                     player.mobility.right = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "down":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("down-blocked");
-//                     player.mobility.down = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.right = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "right":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("right-blocked");
-//                     player.mobility.right = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.down = true;
-//                     player.mobility.left = true;
-//                 }
-//                 break;
-//             case "left":
-//                 if (
-//                     player.x < (box.x) + (box.width - 5) &&
-//                     player.x + player.width > (box.x + 5) &&
-//                     (player.y) < (box.y) + (box.height - 5) &&
-//                     (player.y) + player.height > (box.y + 5)
-//                 ) {
-//                     console.log("left-blocked");
-//                     player.mobility.left = false;
-//                 } else {
-//                     player.mobility.up = true;
-//                     player.mobility.down = true;
-//                     player.mobility.right = true;
-//                 }
-//                 break;
-//         }
-//     })
-// }
-
-// function checkObstruction(dir) {
-//     boxes.forEach(function (box) {
-//         switch (dir) {
-//             case "up":
-//                 if (
-//                     player.x < (box.x) + (box.width) &&
-//                     player.x + player.width > (box.x) &&
-//                     (player.y - player.speed) < (box.y) + (box.height) &&
-//                     (player.y - player.speed) + player.height > (box.y)
-//                 ) {
-//                     return;
-//                 }
-//             break;
-//         }
-// })
-// }
-
+function mobilityReset () {
+    player.mobility.up = true;
+    player.mobility.down = true;
+    player.mobility.left = true;
+    player.mobility.right = true;
+}
 
 let fps, fpsInterval, startTime, current, start, elapsed;
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
     start = Date.now();
-    // startTime = start;
+    startTime = start;
     animate();
 }
 
@@ -457,7 +321,7 @@ function animate() {
         for (i = 0; i < boxes.length; i++) {
             boxes[i].draw();
         }
-        drawSprite(images.playerSprite, player.width * player.frameX, player.height * player.frameY, player.width, player.height, player.x, player.y, player.width, player.height);
+        drawSprite(images.rocket, player.width * player.frameX, player.height * player.frameY, player.width, player.height, player.x, player.y, player.width, player.height);
         movePlayer();
         handlePlayerFrame();
         checkCollision();

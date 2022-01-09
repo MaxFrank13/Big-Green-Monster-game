@@ -30,7 +30,15 @@ const monsterActions = ["up", "right", "down", "left"];
 let numberOfMonsters = 10;
 const monsters = [];
 let numberOfBoxes = 10;
-const boxes = [];
+const boxes = []; // more objects can be pushed to this array for blocking player movement
+let numberOfFood = 10;
+const food = [];
+let health = 100;
+let score = 0;
+
+// Display score and health to DOM
+let score_div = document.querySelector(".score");
+let health_div = document.querySelector(".health-bar");
 
 // load images
 const images = {};
@@ -41,20 +49,22 @@ images.monster.src = "assets/images/hulk.png";
 images.box = new Image();
 images.box.src = "assets/images/boxes.png";
 images.rocket = new Image();
-images.rocket.src = "assets/images/rocket.png";
+images.rocket.src = "assets/images/rocket3.png";
+images.food = new Image();
+images.food.src = "assets/images/strawberrycake.png"
 
 // **** Objects ****
 
 const player = {
     x: 200,
     y: 200,
-    width: 32,
-    height: 48,
+    width: 23,
+    height: 34.2,
     frameX: 0,
     frameY: 0,
     speed: 9,
     moving: false,
-    collisionY: 0,
+    collisionUp: 0,
     collisionX: 0,
     direction: "",
     mobility: {
@@ -77,6 +87,20 @@ class Box {
     }
     draw() {
         drawSprite(images.box, this.width * this.frameX, this.height * this.frameY, this.width, this.height, this.x, this.y, this.width, this.height);
+    }
+}
+
+class Food {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.width = 21;
+        this.height = 23;
+        this.frameX = 0;
+        this.frameY = 0;
+    }
+    draw() {
+        drawSprite(images.food, this.width * this.frameX, this.height * this.frameY, this.width, this.height, this.x, this.y, this.width, this.height);
     }
 }
 
@@ -152,22 +176,29 @@ class Monster {
 for (i = 0; i < numberOfMonsters; i++) {
     monsters.push(new Monster());
 }
-
 for (i = 0; i < numberOfBoxes; i++) {
     boxes.push(new Box());
 }
+for (i = 0; i < numberOfFood; i++) {
+    food.push(new Food());
+}
 
-console.log(player)
-console.log(monsters)
-console.log(boxes)
+console.log(player);
+console.log(monsters);
+console.log(boxes);
+console.log(food);
 
 
 // **** Functions ****
 
 // function takes image source, instructions on how to crop image source (sX, sY, sW, sH), start destination coordinates for placing the image (dX, dY, dW, dH) within the canvas element
+
 function drawSprite(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 }
+
+
+// Player Movement
 
 function movePlayer() {
 
@@ -179,7 +210,7 @@ function movePlayer() {
             player.y -= player.speed;
             player.frameY = 3;
         } else if (player.y > 0) {
-            player.y -= player.collisionY; // its working but not enough, need to trim sprite sheet
+            player.y = player.collisionUp;
             player.frameY = 3;
         }
     }
@@ -217,29 +248,14 @@ function movePlayer() {
     }
 }
 
-
 function handlePlayerFrame() {
     if (player.frameX < 3 && player.moving) player.frameX++
     else player.frameX = 0;
 }
 
-function checkCollision() {
-    monsters.forEach(function (monster) {
-        if (player.x > monster.x + monster.width ||
-            player.x + player.width < monster.x ||
-            player.y > monster.y + monster.height ||
-            player.y + player.height < monster.y
-        ) {
-
-        } else {
-            console.log("collision");
-        }
-    })
-}
-
-
 function checkUp() {
     boxes.forEach(function (box) {
+
         if (
             (player.x) < (box.x) + (box.width) &&
             player.x + (player.width) > (box.x) &&
@@ -247,7 +263,7 @@ function checkUp() {
             (player.y - player.speed) + (player.height) > (box.y)
         ) {
             player.mobility.up = false;
-            player.collisionY = player.y - (box.y + box.height);
+            player.collisionUp = box.y + box.height;
         }
     })
 }
@@ -261,7 +277,6 @@ function checkDown() {
             (player.y + player.speed) + (player.height) > (box.y)
         ) {
             player.mobility.down = false;
-            player.collisionY = box.y - (player.y + player.height);
         }
     })
 }
@@ -298,6 +313,40 @@ function mobilityReset () {
     player.mobility.right = true;
 }
 
+
+// NPC and item control
+
+function checkMonster() {
+    monsters.forEach(function (monster) {
+        if (player.x > monster.x + monster.width ||
+            player.x + player.width < monster.x ||
+            player.y > monster.y + monster.height ||
+            player.y + player.height < monster.y
+        ) {
+
+        } else {
+            health -= 5;
+            health_div.textContent = health;
+        }
+    })
+}
+function checkFood() {
+    food.forEach(function (food) {
+        if (player.x > food.x + food.width ||
+            player.x + player.width < food.x ||
+            player.y > food.y + food.height ||
+            player.y + player.height < food.y
+        ) {
+
+        } else {
+            score++;
+            health += 3;
+            score_div.textContent = score;
+            health_div.textContent = health;
+        }
+    })
+}
+
 let fps, fpsInterval, startTime, current, start, elapsed;
 
 function startAnimating(fps) {
@@ -321,12 +370,15 @@ function animate() {
         for (i = 0; i < boxes.length; i++) {
             boxes[i].draw();
         }
+        for (i = 0; i < food.length; i++) {
+            food[i].draw();
+        }
         drawSprite(images.rocket, player.width * player.frameX, player.height * player.frameY, player.width, player.height, player.x, player.y, player.width, player.height);
         movePlayer();
         handlePlayerFrame();
-        checkCollision();
-        // 
-        // checkObstruction();
+        checkMonster();
+        checkFood();
+
     }
 }
 

@@ -4,6 +4,9 @@ const ctx = canvas.getContext("2d");
 canvas.height = window.innerHeight / 2;
 canvas.width = window.innerWidth / 2;
 
+// HTML selectors
+const startBtn = document.querySelector(".start");
+
 // Adjust everytime window is resized to prevent warping
 
 window.addEventListener("resize", function () {
@@ -31,7 +34,7 @@ let numberOfMonsters = 10;
 const monsters = [];
 let numberOfBoxes = 10;
 const boxes = []; // more objects can be pushed to this array for blocking player movement
-let numberOfFood = 10;
+let numberOfFood = 4;
 const food = [];
 let health = 100;
 let score = 0;
@@ -183,12 +186,6 @@ for (i = 0; i < numberOfFood; i++) {
     food.push(new Food());
 }
 
-console.log(player);
-console.log(monsters);
-console.log(boxes);
-console.log(food);
-
-
 // **** Functions ****
 
 // function takes image source, instructions on how to crop image source (sX, sY, sW, sH), start destination coordinates for placing the image (dX, dY, dW, dH) within the canvas element
@@ -327,18 +324,22 @@ function checkMonster() {
         } else {
             health -= 5;
             health_div.textContent = health;
+            if (health <= 0) {
+                cancelAnimationFrame(requestID);
+            }
         }
     })
 }
 function checkFood() {
-    food.forEach(function (food) {
-        if (player.x > food.x + food.width ||
-            player.x + player.width < food.x ||
-            player.y > food.y + food.height ||
-            player.y + player.height < food.y
+    food.forEach(function (item, index) {
+        if (player.x > item.x + item.width ||
+            player.x + player.width < item.x ||
+            player.y > item.y + item.height ||
+            player.y + player.height < item.y
         ) {
 
         } else {
+            food.splice(index, 1);
             score++;
             health += 3;
             score_div.textContent = score;
@@ -349,15 +350,17 @@ function checkFood() {
 
 let fps, fpsInterval, startTime, current, start, elapsed;
 
-function startAnimating(fps) {
-    fpsInterval = 1000 / fps;
+function startAnimating() {
+    fpsInterval = 1000 / 15;
     start = Date.now();
     startTime = start;
     animate();
 }
 
+let requestID;
+
 function animate() {
-    requestAnimationFrame(animate);
+    requestID = requestAnimationFrame(animate);
     current = Date.now();
     elapsed = current - start;
     if (elapsed > fpsInterval) {
@@ -378,8 +381,13 @@ function animate() {
         handlePlayerFrame();
         checkMonster();
         checkFood();
-
+        
     }
 }
 
-startAnimating(15);
+const endBtn = document.querySelector(".end");
+
+startBtn.addEventListener("click", startAnimating);
+endBtn.addEventListener("click", function() {
+    cancelAnimationFrame(requestID);
+})

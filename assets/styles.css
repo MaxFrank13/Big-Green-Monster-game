@@ -45,3 +45,15 @@ canvas {
     border-radius: 5px;
     font-size: 4rem;
 }
+.start {
+    position: absolute;
+    top: 150px;
+    right: 150px;
+    z-index: 99;
+}
+.end {
+    position: absolute;
+    top: 100px;
+    right: 100px;
+    z-index: 99;
+}
